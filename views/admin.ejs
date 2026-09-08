@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title><%= title %> · @botastra</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="admin-body">
+  <div class="ambient ambient-one"></div>
+  <aside class="admin-sidebar">
+    <a class="brand" href="/"><span class="brand-mark">B</span><span><strong>BotAstra</strong><small>CONTROL ROOM</small></span></a>
+    <nav><a class="active" href="#overview">▦ <span>Overview</span></a><a href="#keys">⌁ <span>API Keys</span></a><a href="#activity">↗ <span>Activity</span></a><a href="/docs">◇ <span>API Docs</span></a></nav>
+    <div class="sidebar-bottom"><span class="storage-dot"></span><div><strong><%= storageKind %></strong><small>storage online</small></div><form method="post" action="/admin/logout"><button type="submit">Log out</button></form></div>
+  </aside>
+  <main class="admin-main">
+    <header class="admin-top"><div><span class="kicker">ADMINISTRATION</span><h1>Control room</h1></div><button class="button button-primary" id="show-create">+ Issue API key</button></header>
+    <div id="admin-error" class="alert alert-error hidden"></div>
+
+    <section id="overview" class="stats-grid">
+      <article><span>Total keys</span><strong id="stat-total">—</strong><small>all time</small></article>
+      <article><span>Active now</span><strong id="stat-active">—</strong><small class="good">accepting requests</small></article>
+      <article><span>Requests today</span><strong id="stat-requests">—</strong><small>all endpoints</small></article>
+      <article><span>Verified today</span><strong id="stat-verified">—</strong><small>replay protected</small></article>
+    </section>
+
+    <section id="keys" class="admin-panel">
+      <div class="panel-heading"><div><h2>API keys</h2><p>Plaintext keys are never stored and cannot be recovered.</p></div><div class="table-filter"><input id="key-search" type="search" placeholder="Search labels or prefixes…"></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Key</th><th>Scopes</th><th>Status</th><th>Expires</th><th>Usage</th><th></th></tr></thead><tbody id="keys-body"><tr><td colspan="6" class="loading-cell">Loading keys…</td></tr></tbody></table></div>
+    </section>
+
+    <section id="activity" class="admin-panel">
+      <div class="panel-heading"><div><h2>Recent activity</h2><p>Only metadata is logged—never API keys or Gmail credentials.</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Time</th><th>Key</th><th>Request</th><th>Status</th><th>Latency</th></tr></thead><tbody id="logs-body"><tr><td colspan="5" class="loading-cell">Loading activity…</td></tr></tbody></table></div>
+    </section>
+    <footer class="admin-footer">Owner credit <strong>@botastra</strong> · Not affiliated with FamPay/FamApp.</footer>
+  </main>
+
+  <dialog id="create-dialog" class="modal">
+    <form id="admin-create-form" method="dialog">
+      <div class="modal-head"><div><span class="kicker">NEW CREDENTIAL</span><h2>Issue an API key</h2></div><button type="button" class="icon-button" data-close>×</button></div>
+      <div class="field-grid two"><label><span>Key label</span><input name="label" required placeholder="Customer bot"></label><label><span>Contact email</span><input name="contact_email" type="email" placeholder="optional@example.com"></label></div>
+      <div class="field-grid two"><label><span>Expiry in hours</span><input name="expires_in_hours" type="number" min="1" max="87600" value="168" required></label><fieldset><legend>Scopes</legend><label class="check-inline"><input name="scope_qr" type="checkbox" checked> QR</label><label class="check-inline"><input name="scope_verify" type="checkbox" checked> Verify</label></fieldset></div>
+      <div class="form-divider"><span>Verifier & QR defaults</span><small>Gmail is required only for Verify scope.</small></div>
+      <div class="field-grid two"><label><span>Gmail</span><input name="gmail" type="email" autocomplete="off" placeholder="merchant@gmail.com"></label><label><span>Gmail App Password</span><input name="gmail_app_password" type="password" autocomplete="new-password" placeholder="abcd efgh ijkl mnop"></label></div>
+      <div class="field-grid two"><label><span>Default UPI ID</span><input name="default_upi_id" placeholder="merchant@fam"></label><label><span>Payee name</span><input name="payee_name" placeholder="Merchant Name"></label></div>
+      <label><span>Trusted senders</span><input name="allowed_senders" value="<%= defaultAllowedSenders %>" placeholder="alerts@example.com, example.com"></label>
+      <div id="create-error" class="alert alert-error hidden"></div>
+      <div class="modal-actions"><button type="button" class="button button-ghost" data-close>Cancel</button><button class="button button-primary" type="submit">Issue expiring key →</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="secret-dialog" class="modal secret-modal">
+    <div class="success-orbit">✓</div><span class="kicker">KEY ISSUED</span><h2>Copy this secret now.</h2><p>It cannot be retrieved after this dialog closes.</p>
+    <div class="secret-box"><code id="admin-issued-key"></code><button type="button" id="admin-copy-key">Copy</button></div>
+    <button type="button" class="button button-primary button-wide" data-secret-close>I saved the key</button>
+  </dialog>
+  <script src="/assets/admin.js" defer></script>
+</body>
+</html>

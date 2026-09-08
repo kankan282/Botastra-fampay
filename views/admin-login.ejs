@@ -1,0 +1,13 @@
+<%- include('partials/header') %>
+<section class="login-wrap shell">
+  <div class="login-card">
+    <div class="login-mark">B</div><span class="kicker">CONTROL ROOM</span><h1>Administrator login</h1><p>Enter the <code>ADMIN_PASSWORD</code> configured in your Render environment.</p>
+    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+    <form action="/admin/login" method="post">
+      <label><span>Admin password</span><input name="password" type="password" required autofocus autocomplete="current-password" placeholder="••••••••••••"></label>
+      <button class="button button-primary button-wide" type="submit">Open dashboard →</button>
+    </form>
+    <small>API automation can use <code>Authorization: Bearer $ADMIN_TOKEN</code> instead.</small>
+  </div>
+</section>
+<%- include('partials/footer') %>

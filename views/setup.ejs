@@ -1,0 +1,60 @@
+<%- include('partials/header') %>
+<section class="page-hero shell compact">
+  <div><span class="kicker">SELF-SERVICE SETUP</span><h1>Create an expiring API key.</h1><p>Connect only a Gmail account you own. Your App Password is encrypted before database storage and is never returned by the API.</p></div>
+  <div class="step-badge">KEYS EXPIRE IN ≤ <%= maxTtlDays %> DAYS</div>
+</section>
+
+<section class="shell setup-layout">
+  <div class="panel form-panel">
+    <% if (!enabled) { %>
+      <div class="empty-state"><span>⊘</span><h2>Public key creation is disabled</h2><p>Ask the administrator to issue a key from the admin dashboard.</p></div>
+    <% } else { %>
+    <form id="setup-form" novalidate>
+      <div class="form-section"><span class="form-number">1</span><div><h2>Key identity</h2><p>A label helps the administrator recognize your key.</p></div></div>
+      <div class="field-grid two">
+        <label><span>Key label</span><input name="label" required minlength="2" maxlength="80" placeholder="My Telegram bot"></label>
+        <label><span>Contact email <em>optional</em></span><input type="email" name="contact_email" placeholder="you@example.com"></label>
+      </div>
+
+      <div class="form-section"><span class="form-number">2</span><div><h2>Gmail verifier</h2><p>Use a Google App Password—not your regular Google password.</p></div></div>
+      <div class="field-grid two">
+        <label><span>Gmail address</span><input type="email" name="gmail" autocomplete="username" required placeholder="merchant@gmail.com"></label>
+        <label><span>16-character App Password</span><input type="password" name="gmail_app_password" autocomplete="new-password" required placeholder="abcd efgh ijkl mnop"><small><a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer">Open Google App Passwords ↗</a></small></label>
+      </div>
+
+      <div class="form-section"><span class="form-number">3</span><div><h2>Payment profile</h2><p>These defaults are used by the QR endpoint and can be overridden per request.</p></div></div>
+      <div class="field-grid two">
+        <label><span>UPI ID</span><input name="default_upi_id" required placeholder="merchant@fam"></label>
+        <label><span>Payee name</span><input name="payee_name" required maxlength="100" placeholder="Merchant Name"></label>
+      </div>
+      <label><span>Trusted payment email senders</span><input name="allowed_senders" required value="<%= defaultAllowedSenders %>" placeholder="alerts@example.com, example.com"><small>Exact email addresses or domains, comma-separated. Confirm the real sender from Gmail's “Show original” view.</small></label>
+
+      <div class="field-grid two">
+        <label><span>Expires after</span><select name="expires_in_days">
+          <% [1, 3, 7, 14, 30, 60, 90].filter(function(day){ return day <= maxTtlDays }).forEach(function(day){ %>
+            <option value="<%= day %>" <%= day === defaultTtlDays ? 'selected' : '' %>><%= day %> day<%= day === 1 ? '' : 's' %></option>
+          <% }) %>
+        </select></label>
+        <% if (accessCodeRequired) { %><label><span>Setup access code</span><input type="password" name="setup_access_code" required placeholder="Provided by administrator"></label><% } %>
+      </div>
+
+      <label class="consent"><input type="checkbox" name="consent" required><span>I own or am authorized to use this Gmail inbox. I understand the deployed server can read matching inbox messages through IMAP.</span></label>
+      <div id="form-error" class="alert alert-error hidden" role="alert"></div>
+      <button class="button button-primary button-wide" type="submit">Encrypt settings & create key <span>→</span></button>
+    </form>
+    <section id="key-result" class="key-result hidden" aria-live="polite">
+      <div class="success-orbit">✓</div><span class="kicker">KEY CREATED</span><h2>Copy it now.</h2><p>This is the only time the full secret will be displayed.</p>
+      <div class="secret-box"><code id="issued-key"></code><button type="button" id="copy-key">Copy</button></div>
+      <dl class="result-meta"><div><dt>Expires</dt><dd id="key-expiry"></dd></div><div><dt>Scopes</dt><dd>qr, verify</dd></div></dl>
+      <a class="button button-ghost" href="/docs">Use this key →</a>
+    </section>
+    <% } %>
+  </div>
+  <aside class="setup-aside">
+    <div class="aside-card"><span class="aside-icon">⛨</span><h3>Credential protection</h3><p>Gmail credentials and payment defaults use AES-256-GCM encryption. API keys are stored only as one-way hashes.</p></div>
+    <div class="aside-card warning"><span class="aside-icon">!</span><h3>Before production</h3><p>Send a ₹1.01 test payment and inspect the actual alert sender. Email matching is not an official payment-gateway webhook.</p></div>
+    <div class="aside-card"><span class="aside-icon">⌛</span><h3>Automatic expiry</h3><p>Expired keys stop working immediately. An admin can extend, rotate, or revoke keys from the dashboard.</p></div>
+  </aside>
+</section>
+<% if (enabled) { %><script src="/assets/setup.js" defer></script><% } %>
+<%- include('partials/footer') %>

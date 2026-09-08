@@ -1,0 +1,54 @@
+<%- include('partials/header') %>
+<section class="hero shell">
+  <div class="hero-copy">
+    <div class="eyebrow"><span class="pulse"></span> Render-ready · API-first · Expiring keys</div>
+    <h1>Payment verification,<br><span>built like a real API.</span></h1>
+    <p class="hero-lead">Generate UPI payment QR codes and verify trusted FamPay/FamApp Gmail alerts through one protected API. Encrypted credentials, replay protection, scoped keys, and an admin dashboard are included.</p>
+    <div class="hero-actions">
+      <% if (publicKeyCreation) { %><a class="button button-primary" href="/setup">Create your API key <span>→</span></a><% } %>
+      <a class="button button-ghost" href="/docs">Read API docs</a>
+    </div>
+    <div class="trust-row">
+      <span>◈ AES-256-GCM</span><span>◈ PostgreSQL</span><span>◈ Gmail IMAP</span><span>◈ UTR replay lock</span>
+    </div>
+  </div>
+  <div class="terminal-card">
+    <div class="terminal-top"><span></span><span></span><span></span><em>POST /api/v1/verify</em></div>
+    <pre><code><b>curl</b> -X POST "$BASE/api/v1/verify" \
+  -H <i>"X-API-Key: bta_live_••••••"</i> \
+  -H <i>"Content-Type: application/json"</i> \
+  -d <i>'{"amount": 25.01}'</i>
+
+<span>{
+  "ok": true,
+  "verified": true,
+  "amount": 25.01,
+  "utr": "••••••••9012",
+  "sender_name": "UPI User"
+}</span></code></pre>
+    <div class="terminal-status"><span class="pulse"></span> 200 OK · matched trusted sender · replay-safe</div>
+  </div>
+</section>
+
+<section class="shell metric-strip">
+  <div><strong>01</strong><span>Configure Gmail App Password</span></div>
+  <div><strong>02</strong><span>Receive an expiring API key</span></div>
+  <div><strong>03</strong><span>Generate QR and verify payment</span></div>
+</section>
+
+<section class="shell section-block">
+  <div class="section-heading"><div><span class="kicker">FULL STACK INCLUDED</span><h2>Everything needed to ship.</h2></div><p>One deploy contains the web pages, REST API, encrypted storage, key administration, and database schema.</p></div>
+  <div class="feature-grid">
+    <article class="feature-card featured"><span class="feature-icon">⌁</span><h3>Trusted inbox verification</h3><p>Checks the configured Gmail inbox over TLS, restricts matches to approved sender domains, and can require Gmail authentication results.</p><ul><li>Dynamic decimal amount window</li><li>Manual 12-digit UTR or Txn ID</li><li>Configurable sender allowlist</li></ul></article>
+    <article class="feature-card"><span class="feature-icon">⌬</span><h3>Expiring API keys</h3><p>Keys are shown once, stored as SHA-256 hashes, checked for expiry on every request, and can be revoked or rotated.</p></article>
+    <article class="feature-card"><span class="feature-icon">▦</span><h3>Admin control room</h3><p>Issue scoped keys, choose expiry in hours, extend access, rotate secrets, monitor usage, and revoke instantly.</p></article>
+    <article class="feature-card"><span class="feature-icon">◇</span><h3>UPI QR endpoint</h3><p>Returns a standards-based <code>upi://pay</code> URI and an embedded base64 QR image with optional payee defaults.</p></article>
+    <article class="feature-card"><span class="feature-icon">⛨</span><h3>Replay protection</h3><p>A unique transaction fingerprint prevents a UTR, Txn ID, or matched email from being accepted more than once.</p></article>
+  </div>
+</section>
+
+<section class="shell callout">
+  <div><span class="kicker">DEPLOY IN MINUTES</span><h2>Made for Render Blueprints.</h2><p>PostgreSQL wiring, secrets, health checks, and the Node runtime are already declared in <code>render.yaml</code>.</p></div>
+  <a class="button button-primary" href="/docs#deploy">Deployment guide →</a>
+</section>
+<%- include('partials/footer') %>

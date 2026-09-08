@@ -1,0 +1,61 @@
+<%- include('partials/header') %>
+<section class="page-hero shell compact docs-hero">
+  <div><span class="kicker">API REFERENCE · V1</span><h1>Small surface. Strong controls.</h1><p>All payment endpoints return JSON. Authenticate with <code>X-API-Key</code> or a Bearer API key.</p></div>
+  <a class="button button-ghost" href="/openapi.json">OpenAPI 3.1 JSON ↗</a>
+</section>
+
+<section class="shell docs-layout">
+  <aside class="docs-nav"><strong>GETTING STARTED</strong><a href="#auth">Authentication</a><a href="#errors">Errors</a><strong>PAYMENTS</strong><a href="#qr">Generate QR</a><a href="#verify">Verify payment</a><a href="#key-status">Key status</a><strong>OPERATIONS</strong><a href="#admin-api">Admin API</a><a href="#deploy">Render deploy</a><a href="#security">Security notes</a></aside>
+  <div class="docs-content">
+    <section id="auth" class="doc-section"><span class="doc-index">01</span><h2>Authentication</h2><p>Send your key in either supported header. Never put API keys in query strings or browser-side public JavaScript.</p><div class="code-card"><div>HTTP</div><pre><code>X-API-Key: bta_live_your_secret_key
+
+# or
+Authorization: Bearer bta_live_your_secret_key</code></pre></div><div class="notice"><strong>One-time display</strong><span>The full key appears only at creation or rotation. The database stores its SHA-256 hash.</span></div></section>
+
+    <section id="errors" class="doc-section"><span class="doc-index">02</span><h2>Error envelope</h2><p>Transport and validation errors use a non-2xx status. A completed payment check returns HTTP 200 with <code>verified: false</code> when no payment matches.</p><div class="code-card"><div>JSON</div><pre><code>{
+  "ok": false,
+  "error": {
+    "code": "EXPIRED_API_KEY",
+    "message": "The API key has expired."
+  }
+}</code></pre></div></section>
+
+    <section id="qr" class="doc-section"><div class="endpoint-title"><span class="method post">POST</span><code>/api/v1/qr</code></div><h2>Generate a UPI QR</h2><p><code>upi_id</code> and <code>payee_name</code> are optional when saved as key defaults.</p><div class="code-card"><div>cURL</div><pre><code>curl -X POST "<%= baseUrl %>/api/v1/qr" \
+  -H "X-API-Key: $BOTASTRA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 25.01,
+    "note": "Order 1042"
+  }'</code></pre></div><div class="response-grid"><div><strong>200 response fields</strong><ul><li><code>qr_image</code> — base64 data URL</li><li><code>upi_uri</code> — UPI deep link</li><li><code>created_at</code> — ISO timestamp</li></ul></div><div class="mini-tip">Use a unique decimal amount such as ₹25.01 for dynamic matching.</div></div></section>
+
+    <section id="verify" class="doc-section"><div class="endpoint-title"><span class="method post">POST</span><code>/api/v1/verify</code></div><h2>Verify a payment</h2><p>Without a UTR/Txn ID, the service checks recent trusted alerts for the exact amount. With a reference, it searches the configured longer lookback window.</p><div class="code-card"><div>Dynamic amount</div><pre><code>curl -X POST "<%= baseUrl %>/api/v1/verify" \
+  -H "X-API-Key: $BOTASTRA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 25.01}'</code></pre></div><div class="code-card"><div>Manual UTR</div><pre><code>curl -X POST "<%= baseUrl %>/api/v1/verify" \
+  -H "X-API-Key: $BOTASTRA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 25.01,
+    "utr": "123456789012"
+  }'</code></pre></div><h3>Successful match</h3><div class="code-card"><div>JSON</div><pre><code>{
+  "ok": true,
+  "verified": true,
+  "transaction_id": "123456789012",
+  "amount": 25.01,
+  "utr": "123456789012",
+  "sender_name": "UPI User",
+  "payment_time": "2026-09-09T08:10:00.000Z"
+}</code></pre></div></section>
+
+    <section id="key-status" class="doc-section"><div class="endpoint-title"><span class="method get">GET</span><code>/api/v1/key</code></div><h2>Inspect current key</h2><div class="code-card"><div>cURL</div><pre><code>curl "<%= baseUrl %>/api/v1/key" \
+  -H "X-API-Key: $BOTASTRA_API_KEY"</code></pre></div><p>Returns label, prefix, scopes, expiry, request count, and verifier configuration status. It never returns the full key or decrypted credentials.</p></section>
+
+    <section id="admin-api" class="doc-section"><span class="doc-index">ADMIN</span><h2>Administrator API</h2><p>Use the separate <code>ADMIN_TOKEN</code> value. Admin routes can list, issue, extend, revoke, and rotate keys.</p><div class="endpoint-list"><div><span class="method get">GET</span><code>/api/v1/admin/keys</code><em>List</em></div><div><span class="method post">POST</span><code>/api/v1/admin/keys</code><em>Issue</em></div><div><span class="method post">POST</span><code>/api/v1/admin/keys/:id/extend</code><em>Extend</em></div><div><span class="method post">POST</span><code>/api/v1/admin/keys/:id/revoke</code><em>Revoke</em></div><div><span class="method post">POST</span><code>/api/v1/admin/keys/:id/rotate</code><em>Rotate</em></div></div><div class="code-card"><div>Admin cURL</div><pre><code>curl "<%= baseUrl %>/api/v1/admin/keys" \
+  -H "Authorization: Bearer $ADMIN_TOKEN"</code></pre></div></section>
+
+    <section id="deploy" class="doc-section"><span class="doc-index">SHIP</span><h2>Deploy on Render</h2><ol class="deploy-steps"><li><strong>Upload to GitHub</strong><span>Extract the ZIP, create a private repository, and push all project files. Keep <code>render.yaml</code> at repository root.</span></li><li><strong>Create a Blueprint</strong><span>In Render choose New → Blueprint, connect the repository, and apply the detected Blueprint.</span></li><li><strong>Set ADMIN_PASSWORD</strong><span>Render prompts for this secret because it is declared with <code>sync: false</code>. Use a long unique password.</span></li><li><strong>Confirm sender rules</strong><span>After deployment, inspect a real alert and update <code>DEFAULT_ALLOWED_SENDERS</code> if the sender is not <code>fampay.in</code> or <code>famapp.in</code>.</span></li><li><strong>Run ₹1.01 test</strong><span>Issue a short-lived key, generate a QR, pay it, and verify before accepting real orders.</span></li></ol><div class="notice warning"><strong>Render free Postgres</strong><span>At the time this package was prepared, Render's free PostgreSQL databases expire after 30 days. Upgrade or migrate before expiry if you need durable production data.</span></div></section>
+
+    <section id="security" class="doc-section"><span class="doc-index">SAFE</span><h2>Security & reliability</h2><ul class="security-list"><li><strong>App Password only</strong><span>Never enter your normal Google account password.</span></li><li><strong>Sender verification</strong><span>Use an exact sender address when possible and keep authenticated-email checks enabled.</span></li><li><strong>Low-value verification</strong><span>Email alerts can be delayed or changed. This is not an official bank/FamPay webhook and should not be the only control for high-value fulfilment.</span></li><li><strong>Secret rotation</strong><span>Changing <code>ENCRYPTION_KEY</code> makes existing encrypted configurations unreadable. Back it up securely.</span></li><li><strong>Least privilege</strong><span>Disable public issuance or protect it with <code>SETUP_ACCESS_CODE</code> on a private service.</span></li></ul></section>
+  </div>
+</section>
+<%- include('partials/footer') %>
